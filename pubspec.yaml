@@ -1,0 +1,39 @@
+name: cielo
+description: "A new Flutter package project."
+version: 0.0.1
+homepage:
+publish_to: 'none'
+
+environment:
+  sdk: ^3.9.0
+  flutter: ">=1.17.0"
+
+workspace:
+  - core
+  - dependencies
+  - example
+
+dependencies:
+  flutter:
+    sdk: flutter   
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  melos: ^8.9.0
+
+flutter:
+
+melos:
+  sdkPath: .fvm/flutter_sdk
+  scripts:
+    check:
+      description: Verifica formatação, análise estática e testes de todos os pacotes.
+      steps:
+        - dart run melos format --set-exit-if-changed --output none
+        - dart run melos analyze
+        - dart run melos test
+    fix:
+      description: Aplica as correções automáticas do dart fix em todos os pacotes.
+      exec: dart fix --apply

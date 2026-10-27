@@ -11,6 +11,7 @@ analyzer:
     - linux/**
 
 formatter:
+  page_width: 110
   trailing_commas: preserve
 
 # Additional information about this file can be found at

@@ -13,8 +13,7 @@ import 'viewmodel.dart';
 ///
 ///  * [ViewMixin], which attaches the [ViewModel] and does not disposes it.
 ///  The disposal is done when the Module is disposed.
-abstract class ViewState<S extends StatefulWidget, M extends ViewModel>
-    extends State<S> {
+abstract class ViewState<S extends StatefulWidget, M extends ViewModel> extends State<S> {
   /// Injected ViewModel
   late final M viewModel;
 

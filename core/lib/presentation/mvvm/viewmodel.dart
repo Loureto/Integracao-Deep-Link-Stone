@@ -5,8 +5,7 @@ import 'viewmodel_state.dart';
 
 /// A view model that is used by [ViewMixin] to handle application states and
 /// interact with use cases
-abstract class ViewModel<State extends ViewModelState> extends BlocBase<State>
-    implements Disposable {
+abstract class ViewModel<State extends ViewModelState> extends BlocBase<State> implements Disposable {
   /// If view model is initialized
   bool isInitialized = false;
 

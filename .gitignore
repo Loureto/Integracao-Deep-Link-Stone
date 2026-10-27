@@ -4,3 +4,7 @@
 
 # Dart/Flutter
 .dart_tool/
+
+# Environments (secrets)
+**/env/*.json
+!**/env/*.example.json

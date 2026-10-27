@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Os schemes de retorno precisam ser únicos no terminal: outro app que declare o mesmo
+         scheme pode disputar ou receber a resposta, que traz dados da transação. Usamos só letras
+         minúsculas porque o valor é interpretado pelos apps da Stone e da Cielo. -->
+
+    <!-- Scheme de retorno do deeplink Stone: é usado no intent-filter da MainActivity
+         e enviado como `return_scheme`, que precisa ser igual ao declarado no Manifest. -->
+    <string name="scheme_return" translatable="false">paymentintegrationsstone</string>
+
+    <!-- Scheme de retorno do deep link Cielo: é usado no intent-filter da MainActivity
+         e enviado no `urlCallback` (scheme://host), que precisa ser igual ao declarado no Manifest. -->
+    <string name="cielo_scheme_return" translatable="false">paymentintegrationscielo</string>
+</resources>

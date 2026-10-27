@@ -2,11 +2,37 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Cielo Example - Android (WSL)",
+      "name": "Example DEV",
       "type": "dart",
       "request": "launch",
       "cwd": "example",
-      "program": "lib/main.dart"
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define-from-file",
+        "../assets/env/config_dev.json"
+      ]
+    },
+    {
+      "name": "Example HML",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "example",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define-from-file",
+        "../assets/env/config_hml.json"
+      ]
+    },
+    {
+      "name": "Example PRD",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "example",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define-from-file",
+        "../assets/env/config_prod.json"
+      ]
     }
   ]
 }

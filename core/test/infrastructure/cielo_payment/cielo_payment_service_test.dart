@@ -8,7 +8,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   const channel = MethodChannel('cieloDeeplinkChannel');
-  const environment = Environment(cieloClientID: 'client-id', cieloAccessToken: 'access-token');
+  const environment = Environment(
+    flavorType: 'cielo',
+    cieloClientID: 'client-id',
+    cieloAccessToken: 'access-token',
+  );
   const credentials = {'clientID': 'client-id', 'accessToken': 'access-token'};
   final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late CieloPaymentService service;
@@ -117,7 +121,10 @@ void main() {
 
   test('sem credenciais, só abre a impressão e as informações do terminal', () async {
     mockAndroid((_) async => true);
-    service = CieloPaymentService(channel, const Environment(cieloClientID: '', cieloAccessToken: ''));
+    service = CieloPaymentService(
+      channel,
+      const Environment(flavorType: 'cielo', cieloClientID: '', cieloAccessToken: ''),
+    );
 
     final failure = (await service.sendPayment(payment)).getLeft().toNullable();
     await service.getTerminalInfo();

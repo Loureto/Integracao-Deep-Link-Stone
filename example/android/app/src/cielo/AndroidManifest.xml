@@ -1,0 +1,32 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Cielo: identifica o app como integração via deep link. Sem ele, a integração não funciona
+             e a Cielo retorna o erro "metadata de integração não encontrado". -->
+        <meta-data
+            android:name="cs_integration_type"
+            android:value="uri" />
+
+        <activity android:name=".MainActivity">
+            <!-- Retorno da Cielo: o urlCallback enviado é <cielo_scheme_return>://<ação do lio://>, então
+                 cada ação tem seu host aqui. A lista precisa acompanhar o CieloAction. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="@string/cielo_scheme_return" />
+                <data android:host="payment" />
+                <data android:host="payment-reversal" />
+                <data android:host="print" />
+                <data android:host="order" />
+                <data android:host="orders" />
+                <data android:host="enabledproducts" />
+                <data android:host="establishments" />
+                <data android:host="terminalinfo" />
+            </intent-filter>
+        </activity>
+    </application>
+
+    <queries>
+        <!-- Cielo: obrigatório no Android 11+ (API 30+) para o app enxergar e chamar o UriApp (lio://). -->
+        <package android:name="com.ads.lio.uriappclient" />
+    </queries>
+</manifest>

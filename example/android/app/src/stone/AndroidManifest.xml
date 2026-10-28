@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:name=".MainActivity">
+            <!-- Retorno da Stone após o pagamento. Cancelamento (cancel), impressão (print) e
+                 reimpressão (reprint) voltam em hosts próprios, a declarar quando forem implementados. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="pay-response"
+                    android:scheme="@string/scheme_return" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

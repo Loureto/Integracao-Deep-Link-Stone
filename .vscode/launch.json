@@ -2,36 +2,42 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Example DEV",
+      "name": "Stone Integration",
       "type": "dart",
       "request": "launch",
       "cwd": "example",
       "program": "lib/main.dart",
-      "args": [
+      "toolArgs": [
+        "--flavor",
+        "stone",
         "--dart-define-from-file",
-        "../assets/env/config_dev.json"
+        "../assets/env/stone_env.json"
       ]
     },
     {
-      "name": "Example HML",
+      "name": "Cielo Integration",
       "type": "dart",
       "request": "launch",
       "cwd": "example",
       "program": "lib/main.dart",
-      "args": [
+      "toolArgs": [
+        "--flavor",
+        "cielo",
         "--dart-define-from-file",
-        "../assets/env/config_hml.json"
+        "../assets/env/cielo_env.json"
       ]
     },
     {
-      "name": "Example PRD",
+      "name": "Pagbank Integration",
       "type": "dart",
       "request": "launch",
       "cwd": "example",
       "program": "lib/main.dart",
-      "args": [
+      "toolArgs": [
+        "--flavor",
+        "pagbank",
         "--dart-define-from-file",
-        "../assets/env/config_prod.json"
+        "../assets/env/pagbank_env.json"
       ]
     }
   ]

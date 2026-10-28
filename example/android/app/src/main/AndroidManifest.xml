@@ -1,14 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Parte comum aos flavors. O que é de cada adquirente (intent-filters de retorno, permissões,
+         <queries>) fica em src/<flavor>/AndroidManifest.xml, para o APK de uma adquirente não
+         referenciar as outras. -->
     <application
         android:label="example"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <!-- Cielo: identifica o app como integração via deep link. Sem ele, a integração não funciona
-             e a Cielo retorna o erro "metadata de integração não encontrado". -->
-        <meta-data
-            android:name="cs_integration_type"
-            android:value="uri" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -26,9 +23,9 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
-            <!-- Os retornos da Stone e da Cielo chegam como URI em MainActivity.onNewIntent. Sem esta
-                 flag (padrão true desde o Flutter 3.27), o Flutter também repassaria essas URIs, com
-                 dados da transação, ao roteador como rota. -->
+            <!-- Nos flavors de deep link (stone e cielo), os retornos chegam como URI em
+                 MainActivity.onNewIntent. Sem esta flag (padrão true desde o Flutter 3.27), o Flutter
+                 também repassaria essas URIs, com dados da transação, ao roteador como rota. -->
             <meta-data
               android:name="flutter_deeplinking_enabled"
               android:value="false"
@@ -36,33 +33,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-
-            <!-- Retorno da Stone após o pagamento. Cancelamento (cancel), impressão (print) e
-                 reimpressão (reprint) voltam em hosts próprios, a declarar quando forem implementados. -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:host="pay-response"
-                    android:scheme="@string/scheme_return" />
-            </intent-filter>
-
-            <!-- Retorno da Cielo: o urlCallback enviado é <cielo_scheme_return>://<ação do lio://>, então
-                 cada ação tem seu host aqui. A lista precisa acompanhar o CieloAction. -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="@string/cielo_scheme_return" />
-                <data android:host="payment" />
-                <data android:host="payment-reversal" />
-                <data android:host="print" />
-                <data android:host="order" />
-                <data android:host="orders" />
-                <data android:host="enabledproducts" />
-                <data android:host="establishments" />
-                <data android:host="terminalinfo" />
             </intent-filter>
         </activity>
 
@@ -82,8 +52,5 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
-
-        <!-- Cielo: obrigatório no Android 11+ (API 30+) para o app enxergar e chamar o UriApp (lio://). -->
-        <package android:name="com.ads.lio.uriappclient" />
     </queries>
 </manifest>

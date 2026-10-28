@@ -7,6 +7,9 @@ class EnvironmentLocal implements Environment {
   static final instance = EnvironmentLocal._();
 
   @override
+  String get flavorType => const String.fromEnvironment(EnvironmentDictionary.flavorType);
+
+  @override
   String get cieloClientID => const String.fromEnvironment(EnvironmentDictionary.cieloClientID);
 
   @override

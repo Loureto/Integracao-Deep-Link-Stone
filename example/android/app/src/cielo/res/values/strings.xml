@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- O scheme de retorno precisa ser único no terminal: outro app que declare o mesmo scheme pode
+         disputar ou receber a resposta, que traz dados da transação. Usamos só letras minúsculas
+         porque o valor é interpretado pelo app da Cielo. -->
+
+    <!-- Scheme de retorno do deep link Cielo: é usado no intent-filter da MainActivity
+         e enviado no `urlCallback` (scheme://host), que precisa ser igual ao declarado no Manifest. -->
+    <string name="cielo_scheme_return" translatable="false">paymentintegrationscielo</string>
+</resources>

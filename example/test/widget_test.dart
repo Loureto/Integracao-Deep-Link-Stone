@@ -1,27 +1,51 @@
+import 'package:core/core.dart';
 import 'package:dependencies/dependencies.dart';
-import 'package:example/app_binding.dart';
+import 'package:example/app_module.dart';
 import 'package:example/app_widget.dart';
+import 'package:example/integrations/integrations.dart';
 import 'package:example/presentation/presentation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   tearDown(() => GetIt.instance.reset());
 
-  testWidgets('abre na escolha da integração e navega para Cielo e Stone', (tester) async {
-    AppBinding.binds(GetIt.instance);
+  /// Monta o app como o `main.dart` faz, com o env do [flavorType] e a [integration] escolhida.
+  Future<void> pumpApp(WidgetTester tester, String flavorType, AcquirerIntegration integration) async {
+    final environment = Environment(flavorType: flavorType, cieloClientID: '', cieloAccessToken: '');
+    AppModule.binds(GetIt.instance, environment, integration);
 
-    await tester.pumpWidget(const AppWidget());
+    await tester.pumpWidget(AppWidget(router: AppModule.router(integration)));
     await tester.pumpAndSettle();
-    expect(find.byType(HomePage), findsOneWidget);
+  }
 
-    await tester.tap(find.text('Cielo Smart'));
-    await tester.pumpAndSettle();
-    expect(find.byType(CieloPage), findsOneWidget);
+  testWidgets('flavor stone: abre direto na tela da Stone', (tester) async {
+    await pumpApp(tester, 'stone', const StoneIntegration());
 
-    await tester.pageBack();
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Stone'));
-    await tester.pumpAndSettle();
     expect(find.byType(StonePage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
+  testWidgets('flavor cielo: abre direto na tela da Cielo', (tester) async {
+    await pumpApp(tester, 'cielo', const CieloIntegration());
+
+    expect(find.byType(CieloPage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
+  testWidgets('flavor pagbank: abre direto na tela do PagBank', (tester) async {
+    await pumpApp(tester, 'pagbank', const PagBankIntegration());
+
+    expect(find.byType(PagBankPage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
+  testWidgets('sem --flavor, a home de ajuda mostra o flavor e o env do build e como rodar', (tester) async {
+    await pumpApp(tester, 'cielo', const HelpIntegration());
+
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.text('Nenhuma integração disponível neste build.'), findsOneWidget);
+    expect(find.text('Flavor do build (--flavor): nenhum'), findsOneWidget);
+    expect(find.text('Flavor do env (FLAVOR_TYPE): cielo'), findsOneWidget);
+    expect(find.textContaining('fvm flutter run --flavor <adquirente>'), findsOneWidget);
   });
 }

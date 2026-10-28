@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- PagBank: libera o uso do PlugPagService (pagamento, estorno, ativação). O manifest do
+         PlugPagServiceWrapper também declara esta permissão e os <queries> dos apps PagBank, que entram
+         no manifest final; ela fica explícita aqui, como no demo oficial (SmartCoffee). -->
+    <uses-permission android:name="br.com.uol.pagseguro.permission.MANAGE_PAYMENTS" />
+</manifest>

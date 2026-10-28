@@ -37,6 +37,23 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    // Um flavor por adquirente: cada APK leva só a integração da sua (manifest, Kotlin e Dart), porque o
+    // PagBank não homologa app com referência a outras adquirentes. O main.dart escolhe a integração
+    // Dart pelo flavor, então todo build precisa de --flavor.
+    flavorDimensions += "acquirer"
+    productFlavors {
+        create("stone") {
+            dimension = "acquirer"
+        }
+        create("cielo") {
+            dimension = "acquirer"
+        }
+        create("pagbank") {
+            dimension = "acquirer"
+            proguardFile("src/pagbank/proguard-rules.pro")
+        }
+    }
 }
 
 flutter {
@@ -44,6 +61,11 @@ flutter {
 }
 
 dependencies {
+    // PagBank: SDK dos terminais Smart. O POM não declara dependências, então o RxJava 2 que as funções
+    // async* do wrapper usam não vem junto: chame as funções síncronas fora da main thread, como no demo
+    // oficial (SmartCoffee), ou adicione o RxJava 2 e o RxAndroid 2 antes de usar as async*.
+    "pagbankImplementation"("br.com.uol.pagseguro.plugpagservice.wrapper:wrapper:1.35.0")
+
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.16.1")
 }

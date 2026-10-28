@@ -18,7 +18,8 @@ dependencies:
   flutter_bloc: ^9.1.1
   get_it: ^9.3.0
   go_router: ^17.1.0
-  equatable: ^3.0.0
+  equatable: ">=2.0.8 <4.0.0"   # era ^3.0.0
+
 
 dev_dependencies:
   flutter_test:

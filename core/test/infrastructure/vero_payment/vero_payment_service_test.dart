@@ -90,7 +90,7 @@ void main() {
 
   test('falha na impressão do comprovante não muda o resultado', () async {
     printer.result = left(
-      const NativePrinterError(code: 'ERRO_SEM_PAPEL', message: 'Impressora sem papel, verifique!'),
+      const NativePrinterFailure(code: 'ERRO_SEM_PAPEL', message: 'Impressora sem papel, verifique!'),
     );
     mockAndroid((_) async => {'AUTORIZACAO': 'A1', 'NSU': '123', 'COMPROVANTE_CLIENTE_TXT': 'VIA CLIENTE'});
 
@@ -115,7 +115,7 @@ void main() {
     printer.pending = Completer();
     mockAndroid((_) async => {'AUTORIZACAO': 'A1', 'NSU': '123', 'COMPROVANTE_CLIENTE_TXT': 'VIA CLIENTE'});
 
-    Either<VeroError, VeroTransactionResult>? result;
+    Either<VeroFailure, VeroTransactionResult>? result;
     unawaited(service.creditCardPayment(1).then((value) => result = value));
 
     await tester.pump(const Duration(seconds: 59));
@@ -201,24 +201,24 @@ class _FailingChannel extends MethodChannel {
 class _FakePrinter implements INativePrinterService {
   /// Textos recebidos em [printTxt], na ordem.
   final texts = <String>[];
-  Either<NativePrinterError, Unit> result = right(unit);
+  Either<NativePrinterFailure, Unit> result = right(unit);
 
   /// Quando definida, a impressão só responde quando ela completar, como um driver que não chama o listener.
-  Completer<Either<NativePrinterError, Unit>>? pending;
+  Completer<Either<NativePrinterFailure, Unit>>? pending;
 
   @override
-  Future<Either<NativePrinterError, Unit>> printTxt(String text) async {
+  Future<Either<NativePrinterFailure, Unit>> printTxt(String text) async {
     texts.add(text);
     return pending?.future ?? result;
   }
 
   @override
-  Future<Either<NativePrinterError, Unit>> printNfc(String nfcBase64) => throw UnimplementedError();
+  Future<Either<NativePrinterFailure, Unit>> printNfc(String nfcBase64) => throw UnimplementedError();
 
   @override
-  Future<Either<NativePrinterError, Unit>> testPrint() => throw UnimplementedError();
+  Future<Either<NativePrinterFailure, Unit>> testPrint() => throw UnimplementedError();
 
   @override
-  Future<Either<NativePrinterError, Unit>> printReceipt({required Uint8List bitmap}) =>
+  Future<Either<NativePrinterFailure, Unit>> printReceipt({required Uint8List bitmap}) =>
       throw UnimplementedError();
 }

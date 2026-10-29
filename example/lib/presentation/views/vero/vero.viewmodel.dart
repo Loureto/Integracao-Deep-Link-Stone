@@ -65,7 +65,7 @@ class VeroViewModel extends ViewModel<VeroState> {
 
   Future<void> _print(
     String loading,
-    Future<Either<NativePrinterError, Unit>> Function() print,
+    Future<Either<NativePrinterFailure, Unit>> Function() print,
     String success,
   ) async {
     _start(loading);
@@ -85,7 +85,7 @@ class VeroViewModel extends ViewModel<VeroState> {
     emit(VeroState(status: VeroPageStatus.loading, message: message, lastPayment: state.lastPayment));
   }
 
-  void _fail(VeroError failure) {
+  void _fail(VeroFailure failure) {
     emit(VeroState(status: VeroPageStatus.error, message: failure.message, lastPayment: state.lastPayment));
   }
 }

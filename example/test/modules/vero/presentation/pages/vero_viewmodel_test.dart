@@ -56,7 +56,7 @@ void main() {
 
   test('mostra a falha do app da Vero', () async {
     payments.result = left(
-      const VeroError(code: 'ERRO_DESCONHECIDO', message: 'Operação cancelada pelo usuário!'),
+      const VeroFailure(code: 'ERRO_DESCONHECIDO', message: 'Operação cancelada pelo usuário!'),
     );
 
     await viewModel.pay(VeroPaymentType.debit, 1);
@@ -101,7 +101,7 @@ void main() {
   test('a falha da impressão aparece e o último pagamento continua estornável', () async {
     await viewModel.pay(VeroPaymentType.credit, 1);
     printer.result = left(
-      const NativePrinterError(code: 'ERRO_SEM_PAPEL', message: 'Impressora sem papel, verifique!'),
+      const NativePrinterFailure(code: 'ERRO_SEM_PAPEL', message: 'Impressora sem papel, verifique!'),
     );
 
     await viewModel.testPrint();

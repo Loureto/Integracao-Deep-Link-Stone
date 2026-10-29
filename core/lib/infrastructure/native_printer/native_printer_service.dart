@@ -27,34 +27,34 @@ class NativePrinterService implements INativePrinterService {
   const NativePrinterService(this._channel, this._pdfImage);
 
   @override
-  Future<Either<NativePrinterError, Unit>> printTxt(String text) => _print(_printTxt, {'text': text});
+  Future<Either<NativePrinterFailure, Unit>> printTxt(String text) => _print(_printTxt, {'text': text});
 
   @override
-  Future<Either<NativePrinterError, Unit>> testPrint() => _print(_testPrint, {});
+  Future<Either<NativePrinterFailure, Unit>> testPrint() => _print(_testPrint, {});
 
   @override
-  Future<Either<NativePrinterError, Unit>> printNfc(String nfcBase64) async {
+  Future<Either<NativePrinterFailure, Unit>> printNfc(String nfcBase64) async {
     final image = await _pdfImage.firstPageToPng(nfcBase64);
 
-    return image.match<Future<Either<NativePrinterError, Unit>>>(
-      (failure) async => left(NativePrinterError(code: failure.code, message: failure.message)),
+    return image.match<Future<Either<NativePrinterFailure, Unit>>>(
+      (failure) async => left(NativePrinterFailure(code: failure.code, message: failure.message)),
       (png) => printReceipt(bitmap: png),
     );
   }
 
   @override
-  Future<Either<NativePrinterError, Unit>> printReceipt({required Uint8List bitmap}) async {
+  Future<Either<NativePrinterFailure, Unit>> printReceipt({required Uint8List bitmap}) async {
     final Uint8List image;
     try {
       image = await _withBottomMargin(bitmap);
     } on Exception {
-      return left(NativePrinterError.invalidImage());
+      return left(NativePrinterFailure.invalidImage());
     }
 
     return _print(_printReceipt, {'bitmap': image});
   }
 
-  Future<Either<NativePrinterError, Unit>> _print(
+  Future<Either<NativePrinterFailure, Unit>> _print(
     String method,
     Map<String, Object> arguments, {
     bool isRetry = false,
@@ -65,9 +65,9 @@ class NativePrinterService implements INativePrinterService {
     } on PlatformException catch (e) {
       if (_retryCodes.contains(e.code) && !isRetry) return _print(method, arguments, isRetry: true);
 
-      return left(NativePrinterError(code: e.code, message: e.message ?? e.stacktrace ?? e.toString()));
+      return left(NativePrinterFailure(code: e.code, message: e.message ?? e.stacktrace ?? e.toString()));
     } on MissingPluginException {
-      return left(NativePrinterError.notSupported());
+      return left(NativePrinterFailure.notSupported());
     }
   }
 

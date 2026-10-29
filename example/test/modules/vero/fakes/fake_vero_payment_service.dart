@@ -14,32 +14,34 @@ final approvedTransaction = VeroTransactionResult.fromMap({
 class FakeVeroPaymentService implements IVeroPaymentService {
   /// Chamadas recebidas, com o valor ou o NSU, na ordem.
   final calls = <(String, Object)>[];
-  Either<VeroError, VeroTransactionResult> result = right(approvedTransaction);
+  Either<VeroFailure, VeroTransactionResult> result = right(approvedTransaction);
 
   /// Quando definido, a operação só termina ao completá-lo, como o app da Vero demorando a responder.
   Completer<void>? pending;
 
-  Future<Either<VeroError, VeroTransactionResult>> _record(String method, Object argument) async {
+  Future<Either<VeroFailure, VeroTransactionResult>> _record(String method, Object argument) async {
     calls.add((method, argument));
     await pending?.future;
     return result;
   }
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> creditCardPayment(double amount) =>
+  Future<Either<VeroFailure, VeroTransactionResult>> creditCardPayment(double amount) =>
       _record('creditCardPayment', amount);
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> debitCardPayment(double amount) =>
+  Future<Either<VeroFailure, VeroTransactionResult>> debitCardPayment(double amount) =>
       _record('debitCardPayment', amount);
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> pixPayment(double amount) => _record('pixPayment', amount);
+  Future<Either<VeroFailure, VeroTransactionResult>> pixPayment(double amount) =>
+      _record('pixPayment', amount);
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> acquirerPayment(double amount) =>
+  Future<Either<VeroFailure, VeroTransactionResult>> acquirerPayment(double amount) =>
       _record('acquirerPayment', amount);
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> refundPayment(String nsu) => _record('refundPayment', nsu);
+  Future<Either<VeroFailure, VeroTransactionResult>> refundPayment(String nsu) =>
+      _record('refundPayment', nsu);
 }

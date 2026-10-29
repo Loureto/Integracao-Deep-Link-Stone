@@ -8,14 +8,14 @@ import '../../domain/domain.dart';
 /// são os do `NativePrinter` do flutter_acquirers_sdk, para a migração para este core não mudar o contrato.
 abstract class INativePrinterService {
   /// Imprime o [text], que o nativo desenha em fonte monoespaçada.
-  Future<Either<NativePrinterError, Unit>> printTxt(String text);
+  Future<Either<NativePrinterFailure, Unit>> printTxt(String text);
 
   /// Converte a primeira página da NFC-e em [nfcBase64] numa imagem e a imprime com [printReceipt].
-  Future<Either<NativePrinterError, Unit>> printNfc(String nfcBase64);
+  Future<Either<NativePrinterFailure, Unit>> printNfc(String nfcBase64);
 
   /// Imprime "Impressao teste".
-  Future<Either<NativePrinterError, Unit>> testPrint();
+  Future<Either<NativePrinterFailure, Unit>> testPrint();
 
   /// Imprime a imagem PNG [bitmap], com 1 cm de papel em branco no fim.
-  Future<Either<NativePrinterError, Unit>> printReceipt({required Uint8List bitmap});
+  Future<Either<NativePrinterFailure, Unit>> printReceipt({required Uint8List bitmap});
 }

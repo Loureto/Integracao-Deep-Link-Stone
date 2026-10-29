@@ -25,43 +25,47 @@ class VeroPaymentService implements IVeroPaymentService {
   const VeroPaymentService(this._channel, this._printer);
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> creditCardPayment(double amount) =>
+  Future<Either<VeroFailure, VeroTransactionResult>> creditCardPayment(double amount) =>
       _pay(_payCredit, amount);
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> debitCardPayment(double amount) => _pay(_payDebit, amount);
+  Future<Either<VeroFailure, VeroTransactionResult>> debitCardPayment(double amount) =>
+      _pay(_payDebit, amount);
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> pixPayment(double amount) => _pay(_payPix, amount);
+  Future<Either<VeroFailure, VeroTransactionResult>> pixPayment(double amount) => _pay(_payPix, amount);
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> acquirerPayment(double amount) => _pay(_wallet, amount);
+  Future<Either<VeroFailure, VeroTransactionResult>> acquirerPayment(double amount) => _pay(_wallet, amount);
 
   @override
-  Future<Either<VeroError, VeroTransactionResult>> refundPayment(String nsu) async {
-    if (nsu.trim().isEmpty) return left(VeroError.nsuNotInformed());
+  Future<Either<VeroFailure, VeroTransactionResult>> refundPayment(String nsu) async {
+    if (nsu.trim().isEmpty) return left(VeroFailure.nsuNotInformed());
 
     return _call(_refund, {'nsu': nsu});
   }
 
   /// O app da Vero recebe o valor em centavos. O centralizer truncava (`toInt`) e cobrava R$ 0,29 como 28
   /// centavos; aqui o valor é arredondado.
-  Future<Either<VeroError, VeroTransactionResult>> _pay(String method, double amount) {
+  Future<Either<VeroFailure, VeroTransactionResult>> _pay(String method, double amount) {
     return _call(method, {'amount': (amount * 100).round()});
   }
 
   /// Chama o app da Vero e, como o `VeroPayment` do flutter_acquirers_sdk, imprime o comprovante do cliente pelo
   /// driver genérico depois do pagamento ou do estorno aprovado. O resultado da impressão não muda o da operação.
-  Future<Either<VeroError, VeroTransactionResult>> _call(String method, Map<String, Object> arguments) async {
+  Future<Either<VeroFailure, VeroTransactionResult>> _call(
+    String method,
+    Map<String, Object> arguments,
+  ) async {
     final Map<dynamic, dynamic>? response;
     try {
       response = await _channel.invokeMethod<Map<dynamic, dynamic>>(method, arguments);
     } on PlatformException catch (e) {
-      return left(VeroError(code: e.code, message: e.message ?? e.stacktrace ?? e.toString()));
+      return left(VeroFailure(code: e.code, message: e.message ?? e.stacktrace ?? e.toString()));
     } on MissingPluginException {
-      return left(VeroError.notImplemented(method));
+      return left(VeroFailure.notImplemented(method));
     }
-    if (response == null) return left(VeroError.unknown());
+    if (response == null) return left(VeroFailure.unknown());
 
     final result = VeroTransactionResult.fromMap(response);
     await _printCustomerReceipt(result.customerReceiptTxt);

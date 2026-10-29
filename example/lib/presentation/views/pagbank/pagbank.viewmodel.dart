@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:core/core.dart';
 import 'package:dependencies/dependencies.dart';
@@ -7,9 +8,10 @@ import 'pagbank.state.dart';
 
 class PagBankViewModel extends ViewModel<PagBankState> {
   final IPagBankPaymentService _service;
+  final IPdfImageConverter _pdfImage;
   StreamSubscription<PagBankEvent>? _eventSubscription;
 
-  PagBankViewModel(this._service) : super(PagBankState.initialState());
+  PagBankViewModel(this._service, this._pdfImage) : super(PagBankState.initialState());
 
   static const _passwordHint = 'Digite a senha\n';
 
@@ -91,6 +93,33 @@ class PagBankViewModel extends ViewModel<PagBankState> {
       'Reimprimindo a via do estabelecimento...',
       _service.reprintEstablishmentReceipt,
       'Via do estabelecimento reimpressa.',
+    );
+  }
+
+  /// Impressão livre de uma imagem PNG.
+  Future<void> printImage(Uint8List image) {
+    return _print(
+      'Imprimindo a imagem...',
+      () => _service.printImage(PagBankPrintModel(image: image)),
+      'Imagem impressa.',
+    );
+  }
+
+  /// Converte a primeira página da NFC-e em PNG e a imprime, como o PDV faz com a nota emitida.
+  Future<void> printNfce(String pdfBase64) async {
+    _start('Convertendo a NFC-e em imagem...');
+
+    final image = await _pdfImage.firstPageToPng(pdfBase64);
+
+    await image.match(
+      (failure) async => emit(
+        PagBankState(status: PagBankStatus.error, message: failure.message, lastPayment: state.lastPayment),
+      ),
+      (png) => _print(
+        'Imprimindo a NFC-e...',
+        () => _service.printImage(PagBankPrintModel(image: png)),
+        'NFC-e impressa.',
+      ),
     );
   }
 

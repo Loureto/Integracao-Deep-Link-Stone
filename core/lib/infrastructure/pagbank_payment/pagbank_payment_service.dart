@@ -13,6 +13,7 @@ class PagBankPaymentService implements IPagBankPaymentService {
   static const _getLastApprovedTransaction = 'getLastApprovedTransaction';
   static const _reprintCustomerReceipt = 'reprintCustomerReceipt';
   static const _reprintEstablishmentReceipt = 'reprintEstablishmentReceipt';
+  static const _printImage = 'printImage';
   static const _onEvent = 'onPagBankEvent';
 
   /// `PlugPag.RET_OK`.
@@ -66,6 +67,13 @@ class PagBankPaymentService implements IPagBankPaymentService {
   @override
   Future<Either<PagBankFailure, Unit>> reprintEstablishmentReceipt() => _print(_reprintEstablishmentReceipt);
 
+  @override
+  Future<Either<PagBankFailure, Unit>> printImage(PagBankPrintModel data) async {
+    if (!data.isValid) return left(PagBankFailure.invalidPrint());
+
+    return _print(_printImage, PagBankPrintModel.toMap(data));
+  }
+
   /// Só `result` 0 é aprovada: as outras viram falha com a própria transação.
   Future<Either<PagBankFailure, PagBankTransaction>> _transaction(
     String method, [
@@ -81,8 +89,8 @@ class PagBankPaymentService implements IPagBankPaymentService {
     });
   }
 
-  Future<Either<PagBankFailure, Unit>> _print(String method) async {
-    final result = await _invoke(method);
+  Future<Either<PagBankFailure, Unit>> _print(String method, [Map<String, dynamic>? arguments]) async {
+    final result = await _invoke(method, arguments);
 
     return result.flatMap<Unit>((data) {
       if (data is! Map) return left(PagBankFailure.invalidResponse());

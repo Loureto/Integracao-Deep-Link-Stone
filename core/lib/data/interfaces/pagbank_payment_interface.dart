@@ -25,4 +25,7 @@ abstract class IPagBankPaymentService {
 
   /// Via do estabelecimento da última transação.
   Future<Either<PagBankFailure, Unit>> reprintEstablishmentReceipt();
+
+  /// Impressão livre de uma imagem na impressora do terminal, como a NFC-e convertida em PNG.
+  Future<Either<PagBankFailure, Unit>> printImage(PagBankPrintModel data);
 }

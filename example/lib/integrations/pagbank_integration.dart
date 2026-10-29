@@ -18,7 +18,10 @@ class PagBankIntegration extends AcquirerIntegration {
     i.registerLazySingleton<IPagBankPaymentService>(
       () => PagBankPaymentService(const MethodChannel('pagbankChannel')),
     );
-    i.registerFactory<PagBankViewModel>(() => PagBankViewModel(i.get<IPagBankPaymentService>()));
+    i.registerLazySingleton<IPdfImageConverter>(() => const PdfImageConverter());
+    i.registerFactory<PagBankViewModel>(
+      () => PagBankViewModel(i.get<IPagBankPaymentService>(), i.get<IPdfImageConverter>()),
+    );
   }
 
   @override

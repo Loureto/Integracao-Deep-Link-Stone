@@ -3,22 +3,26 @@ package com.example.example.pagbank
 
 import android.util.Log
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
+import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPrinterData
 import br.com.uol.pagseguro.plugpagservice.wrapper.exception.PlugPagException
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 import java.util.concurrent.Executor
 
 /**
  * Atende o canal do PagBank. As operações bloqueiam até o terminal responder, então rodam em [operations],
  * uma de cada vez, porque o PlugPagService recusa operações em paralelo (SV03/PP1047). O abort roda em
  * [aborts], já que precisa passar na frente do pagamento que interrompe. As respostas e os eventos voltam
- * em [mainThread], a única em que o canal pode responder.
+ * em [mainThread], a única em que o canal pode responder. A impressão livre grava a imagem em
+ * [printDirectory], nulo quando a pasta está indisponível.
  */
 internal class PagBankRequestHandler(
     private val terminal: () -> PagBankTerminal,
     private val operations: Executor,
     private val aborts: Executor,
     private val mainThread: Executor,
+    private val printDirectory: () -> File?,
     private val onEvent: (Map<String, Any?>) -> Unit
 ) {
 
@@ -61,6 +65,18 @@ internal class PagBankRequestHandler(
                 terminal.reprintEstablishmentReceipt().toMap()
             }
 
+            METHOD_PRINT_IMAGE -> {
+                val request = parse(result) { PagBankRequests.print(call) } ?: return
+
+                execute(operations, result) { terminal ->
+                    terminal.requireReady()
+                    withPrintFile(request.image) { file ->
+                        terminal.printFromFile(PlugPagPrinterData(file.absolutePath, request.quality, request.steps))
+                            .toMap()
+                    }
+                }
+            }
+
             else -> result.notImplemented()
         }
     }
@@ -93,6 +109,25 @@ internal class PagBankRequestHandler(
             }
 
             mainThread.execute { reply.send(result) }
+        }
+    }
+
+    /**
+     * O printFromFile envia só o caminho ao serviço do PagBank, que lê o arquivo em outro processo: por isso a
+     * imagem vai para [printDirectory], e o arquivo é apagado depois da impressão, com ou sem sucesso.
+     */
+    private fun <T> withPrintFile(image: ByteArray, print: (File) -> T): T {
+        val directory = printDirectory() ?: throw PagBankException(
+            PagBankException.STORAGE_UNAVAILABLE,
+            "Armazenamento indisponível para gravar a imagem da impressão."
+        )
+        val file = File.createTempFile(PRINT_FILE_PREFIX, PRINT_FILE_SUFFIX, directory)
+
+        try {
+            file.writeBytes(image)
+            return print(file)
+        } finally {
+            file.delete()
         }
     }
 
@@ -135,6 +170,10 @@ internal class PagBankRequestHandler(
         const val METHOD_LAST_APPROVED_TRANSACTION = "getLastApprovedTransaction"
         const val METHOD_REPRINT_CUSTOMER_RECEIPT = "reprintCustomerReceipt"
         const val METHOD_REPRINT_ESTABLISHMENT_RECEIPT = "reprintEstablishmentReceipt"
+        const val METHOD_PRINT_IMAGE = "printImage"
+
+        private const val PRINT_FILE_PREFIX = "pagbank_print"
+        private const val PRINT_FILE_SUFFIX = ".png"
 
         /** PlugPagException sem errorCode próprio. */
         private const val PLUGPAG_ERROR = "PLUGPAG_ERROR"

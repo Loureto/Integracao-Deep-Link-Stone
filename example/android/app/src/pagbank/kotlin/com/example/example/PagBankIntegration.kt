@@ -24,6 +24,11 @@ internal class PagBankIntegration : AcquirerIntegration {
             operations = operations,
             aborts = aborts,
             mainThread = mainThread,
+            // O serviço do PagBank lê a imagem da impressão livre em outro processo, que não alcança a pasta
+            // privada do app. A pasta do app no armazenamento externo dispensa permissão para gravar; se o
+            // serviço não a ler em algum Android, o exemplo antigo do PlugPag usa o armazenamento externo
+            // público, com WRITE_EXTERNAL_STORAGE.
+            printDirectory = { context.getExternalFilesDir(null) },
             onEvent = { event -> channel.invokeMethod(METHOD_ON_EVENT, event) }
         )
 

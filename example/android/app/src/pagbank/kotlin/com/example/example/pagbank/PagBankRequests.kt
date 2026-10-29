@@ -40,11 +40,17 @@ internal enum class PagBankVoidType(val sdkValue: Int) {
     }
 }
 
+/** Impressão livre pedida pelo canal. O handler grava [image] num arquivo, porque o printFromFile recebe um caminho. */
+internal class PagBankPrintRequest(val image: ByteArray, val quality: Int, val steps: Int)
+
 /** Monta os dados do SDK a partir dos argumentos do canal, validando as regras da documentação. */
 internal object PagBankRequests {
 
     // "Deve conter apenas letras (não acentuadas) e números. Esse campo é limitado em 10 caracteres."
     private val USER_REFERENCE = Regex("[A-Za-z0-9]{1,10}")
+
+    // printerQuality do PlugPagPrinterData: de 1 (menor) a 4 (maior), pela documentação anterior do SDK.
+    private val PRINT_QUALITY = 1..4
 
     fun payment(call: MethodCall): PlugPagPaymentData {
         val type = call.enumArgument<PagBankPaymentType>(TYPE)
@@ -89,6 +95,18 @@ internal object PagBankRequests {
         )
     }
 
+    fun print(call: MethodCall): PagBankPrintRequest {
+        val image = call.required<ByteArray>(IMAGE)
+        val quality = call.required<Int>(QUALITY)
+        val steps = call.required<Int>(STEPS)
+
+        require(image.isNotEmpty()) { "image não pode ser vazia." }
+        require(quality in PRINT_QUALITY) { "quality aceita de ${PRINT_QUALITY.first} a ${PRINT_QUALITY.last}." }
+        require(steps >= PlugPag.MIN_PRINTER_STEPS) { "steps deve ser de no mínimo ${PlugPag.MIN_PRINTER_STEPS}." }
+
+        return PagBankPrintRequest(image, quality, steps)
+    }
+
     private inline fun <reified T : Any> MethodCall.required(key: String): T =
         argument<Any>(key) as? T ?: throw IllegalArgumentException("$key ausente ou com tipo inválido.")
 
@@ -107,4 +125,7 @@ internal object PagBankRequests {
     private const val TRANSACTION_CODE = "transactionCode"
     private const val TRANSACTION_ID = "transactionId"
     private const val VOID_TYPE = "voidType"
+    private const val IMAGE = "image"
+    private const val QUALITY = "quality"
+    private const val STEPS = "steps"
 }

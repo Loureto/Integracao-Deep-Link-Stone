@@ -25,6 +25,6 @@ void main() {
       PagBankFailure.fromPlatform(code: 'PAGBANK_ERROR').message,
       'Não foi possível concluir a operação no terminal.',
     );
-    expect(PagBankFailure.fromPrint().message, 'Não foi possível reimprimir o comprovante.');
+    expect(PagBankFailure.fromPrint().message, 'Não foi possível imprimir no terminal.');
   });
 }

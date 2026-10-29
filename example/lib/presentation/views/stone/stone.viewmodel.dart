@@ -42,6 +42,18 @@ class StoneViewModel extends ViewModel<StoneState> {
     );
   }
 
+  /// Imprime a NFC-e pelo app de impressão da Stone. Diferente do pagamento, o resultado chega na própria chamada.
+  Future<void> printNfc(String nfcBase64) async {
+    emit(const StoneState(status: StoneStatus.loading, message: 'Imprimindo a NFC-e...'));
+
+    final result = await _service.printNfc(nfcBase64);
+
+    result.match(
+      (failure) => emit(StoneState(status: StoneStatus.error, message: failure.message)),
+      (_) => emit(const StoneState(status: StoneStatus.success, message: 'NFC-e impressa.')),
+    );
+  }
+
   /// Volta ao estado inicial, por exemplo quando o app Stone não responde.
   void reset() => emit(StoneState.initialState());
 

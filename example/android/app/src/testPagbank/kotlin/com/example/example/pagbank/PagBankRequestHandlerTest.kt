@@ -7,20 +7,29 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagAbortResult
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPrintResult
+import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPrinterData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagTransactionResult
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagVoidData
 import br.com.uol.pagseguro.plugpagservice.wrapper.exception.PlugPagException
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 import java.util.concurrent.Executor
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class PagBankRequestHandlerTest {
+
+    @get:Rule
+    val folder = TemporaryFolder()
 
     private val terminal = FakeTerminal()
     private val operations = QueuedExecutor()
@@ -28,12 +37,14 @@ class PagBankRequestHandlerTest {
     private val mainThread = QueuedExecutor()
     private val events = mutableListOf<Map<String, Any?>>()
     private var terminalFactory: () -> PagBankTerminal = { terminal }
+    private var printDirectory: () -> File? = { folder.root }
 
     private val handler = PagBankRequestHandler(
         terminal = { terminalFactory() },
         operations = operations,
         aborts = aborts,
         mainThread = mainThread,
+        printDirectory = { printDirectory() },
         onEvent = { events += it }
     )
 
@@ -82,7 +93,12 @@ class PagBankRequestHandlerTest {
             payment("userReference" to "VENDA123456"),
             payment("userReference" to 10),
             MethodCall(PagBankRequestHandler.METHOD_VOID_PAYMENT, mapOf("transactionCode" to "TC1")),
-            MethodCall(PagBankRequestHandler.METHOD_PAYMENT, null)
+            MethodCall(PagBankRequestHandler.METHOD_PAYMENT, null),
+            print("image" to ByteArray(0)),
+            print("image" to "PNG"),
+            print("quality" to 0),
+            print("quality" to 5),
+            print("steps" to PlugPag.MIN_PRINTER_STEPS - 1)
         ).forEach { invalid ->
             val result = RecordingResult()
 
@@ -92,6 +108,50 @@ class PagBankRequestHandlerTest {
         }
         operations.runAll()
         assertTrue(terminal.payments.isEmpty())
+        assertTrue(terminal.prints.isEmpty())
+    }
+
+    @Test
+    fun `imprime a imagem por um arquivo e apaga o arquivo depois`() {
+        val result = RecordingResult()
+
+        handler.handle(print(), result)
+        operations.runAll()
+        mainThread.runAll()
+
+        val printed = terminal.prints.single()
+        assertArrayEquals(PNG, printed.content)
+        assertEquals(folder.root, File(printed.data.filePath).parentFile)
+        assertEquals(3, printed.data.printerQuality)
+        assertEquals(90, printed.data.steps)
+        assertFalse("apaga o arquivo depois de imprimir", File(printed.data.filePath).exists())
+        assertEquals(listOf("success"), result.replies)
+        assertEquals(PlugPag.RET_OK, (result.values.single() as Map<*, *>)["result"])
+    }
+
+    @Test
+    fun `apaga o arquivo da impressao mesmo quando ela falha`() {
+        terminal.failure = PlugPagException("Sem papel.", "P05")
+
+        assertEquals(listOf("error:P05"), send(print()))
+        assertEquals(0, folder.root.listFiles()!!.size)
+    }
+
+    @Test
+    fun `nao imprime com o servico ocupado`() {
+        terminal.busy = true
+
+        assertEquals(listOf("error:SERVICE_BUSY"), send(print()))
+        assertTrue(terminal.prints.isEmpty())
+        assertEquals(0, folder.root.listFiles()!!.size)
+    }
+
+    @Test
+    fun `responde STORAGE_UNAVAILABLE sem pasta para a imagem da impressao`() {
+        printDirectory = { null }
+
+        assertEquals(listOf("error:STORAGE_UNAVAILABLE"), send(print()))
+        assertTrue(terminal.prints.isEmpty())
     }
 
     @Test
@@ -206,6 +266,11 @@ class PagBankRequestHandlerTest {
         ) + overrides
     )
 
+    private fun print(vararg overrides: Pair<String, Any?>) = MethodCall(
+        PagBankRequestHandler.METHOD_PRINT_IMAGE,
+        mapOf("image" to PNG, "quality" to 3, "steps" to 90) + overrides
+    )
+
     private class QueuedExecutor : Executor {
         private val tasks = ArrayDeque<Runnable>()
 
@@ -226,6 +291,7 @@ class PagBankRequestHandlerTest {
         val payments = mutableListOf<PlugPagPaymentData>()
         val voids = mutableListOf<PlugPagVoidData>()
         val reprints = mutableListOf<String>()
+        val prints = mutableListOf<Printed>()
         var aborts = 0
 
         private var eventListener: ((PlugPagEventData) -> Unit)? = null
@@ -275,7 +341,16 @@ class PagBankRequestHandlerTest {
             reprints += "establishment"
             return PlugPagPrintResult(PlugPag.RET_OK, null, null, 1)
         }
+
+        /** Lê o arquivo na hora da impressão, como o serviço do PagBank: depois dela ele já foi apagado. */
+        override fun printFromFile(data: PlugPagPrinterData): PlugPagPrintResult {
+            failure?.let { throw it }
+            prints += Printed(data, File(data.filePath).readBytes())
+            return PlugPagPrintResult(PlugPag.RET_OK, null, null, data.steps)
+        }
     }
+
+    private class Printed(val data: PlugPagPrinterData, val content: ByteArray)
 
     private class RecordingResult : MethodChannel.Result {
         val replies = mutableListOf<String>()
@@ -293,5 +368,9 @@ class PagBankRequestHandlerTest {
         override fun notImplemented() {
             replies += "notImplemented"
         }
+    }
+
+    private companion object {
+        val PNG = byteArrayOf(-119, 80, 78, 71)
     }
 }

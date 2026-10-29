@@ -35,8 +35,8 @@ class FakePagBankService implements IPagBankPaymentService {
     return pending?.future ?? transactionResult;
   }
 
-  Future<Either<PagBankFailure, Unit>> _unit(String method) async {
-    calls.add((method, null));
+  Future<Either<PagBankFailure, Unit>> _unit(String method, [Object? data]) async {
+    calls.add((method, data));
     return unitResult;
   }
 
@@ -63,4 +63,7 @@ class FakePagBankService implements IPagBankPaymentService {
 
   @override
   Future<Either<PagBankFailure, Unit>> reprintEstablishmentReceipt() => _unit('reprintEstablishmentReceipt');
+
+  @override
+  Future<Either<PagBankFailure, Unit>> printImage(PagBankPrintModel data) => _unit('printImage', data);
 }

@@ -53,6 +53,20 @@ class _StonePageState extends ViewState<StonePage, StoneViewModel> {
                     child: CustomText.small(payment.label),
                   ),
                 ),
+              const SizedBox(height: 16),
+              CustomText.medium('Impressão de NFC-e', color: Colors.black),
+              const SizedBox(height: 8),
+              for (final nfce in const [
+                (label: 'Imprimir a NFC-e de teste', pdf: NfceMock.pdf),
+                (label: 'Imprimir a NFC-e de homologação', pdf: NfceHomologacaoMock.pdf),
+              ])
+                AbsorbPointer(
+                  absorbing: isLoading,
+                  child: FilledButton(
+                    onPressed: () => viewModel.printNfc(nfce.pdf),
+                    child: CustomText.small(nfce.label),
+                  ),
+                ),
             ],
           );
         },

@@ -63,6 +63,10 @@ class _PagBankPageState extends ViewState<PagBankPage, PagBankViewModel> {
               _Section('Comprovantes'),
               action('Reimprimir a via do cliente', viewModel.reprintCustomerReceipt),
               action('Reimprimir a via do estabelecimento', viewModel.reprintEstablishmentReceipt),
+              _Section('Impressão livre'),
+              action('Imprimir a imagem de teste', () => viewModel.printImage(PagBankPrintsMock.image)),
+              action('Imprimir a NFC-e de teste', () => viewModel.printNfce(NfceMock.pdf)),
+              action('Imprimir a NFC-e de homologação', () => viewModel.printNfce(NfceHomologacaoMock.pdf)),
             ],
           );
         },

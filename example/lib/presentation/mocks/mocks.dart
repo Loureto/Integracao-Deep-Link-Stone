@@ -1,4 +1,7 @@
 export 'cielo_payments_mock.dart';
 export 'cielo_prints_mock.dart';
+export 'nfce_homologacao_mock.dart';
+export 'nfce_mock.dart';
 export 'pagbank_payments_mock.dart';
+export 'pagbank_prints_mock.dart';
 export 'stone_payments_mock.dart';

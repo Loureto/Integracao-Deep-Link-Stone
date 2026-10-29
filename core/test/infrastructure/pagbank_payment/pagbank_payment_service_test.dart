@@ -168,6 +168,51 @@ void main() {
     expect(failure?.message, 'SEM PAPEL');
   });
 
+  group('printImage', () {
+    final image = Uint8List.fromList([137, 80, 78, 71]);
+
+    test('envia a imagem, a qualidade e o avanço de papel, e só é sucesso com result 0', () async {
+      mockAndroid((_) async => {'result': 0, 'errorCode': null, 'message': null});
+
+      final result = await service.printImage(
+        PagBankPrintModel(image: image, quality: PagBankPrintQuality.high, steps: 90),
+      );
+
+      expect(calls.single.method, 'printImage');
+      expect(calls.single.arguments, {'image': image, 'quality': 3, 'steps': 90});
+      expect(result.isRight(), isTrue);
+
+      mockAndroid((_) async => {'result': -1, 'errorCode': 'P05', 'message': 'SEM PAPEL'});
+
+      final failure = (await service.printImage(PagBankPrintModel(image: image))).getLeft().toNullable();
+      expect(failure?.code, 'P05');
+      expect(failure?.message, 'SEM PAPEL');
+    });
+
+    test('não chama o terminal com imagem vazia ou avanço abaixo do mínimo', () async {
+      mockAndroid((_) async => {'result': 0});
+
+      final failures = [
+        for (final data in [
+          PagBankPrintModel(image: Uint8List(0)),
+          PagBankPrintModel(image: image, steps: 69),
+        ])
+          (await service.printImage(data)).getLeft().toNullable()?.code,
+      ];
+
+      expect(failures, ['INVALID_PRINT', 'INVALID_PRINT']);
+      expect(calls, isEmpty);
+    });
+
+    test('falha sem mensagem do terminal não fala em reimpressão', () async {
+      mockAndroid((_) async => {'result': -1, 'errorCode': null, 'message': null});
+
+      final failure = (await service.printImage(PagBankPrintModel(image: image))).getLeft().toNullable();
+
+      expect(failure?.message, allOf(isNotEmpty, isNot(contains('reimprimir'))));
+    });
+  });
+
   test('publica em events o onPagBankEvent enviado pelo Android', () async {
     final event = service.events.first;
 

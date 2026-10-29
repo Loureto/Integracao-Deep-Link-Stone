@@ -7,14 +7,17 @@ import 'package:example/presentation/presentation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/fake_pagbank_service.dart';
+import '../../fakes/fake_pdf_image_converter.dart';
 
 void main() {
   late FakePagBankService service;
+  late FakePdfImageConverter converter;
   late PagBankViewModel viewModel;
 
   setUp(() {
     service = FakePagBankService();
-    viewModel = PagBankViewModel(service);
+    converter = FakePdfImageConverter();
+    viewModel = PagBankViewModel(service, converter);
   });
 
   tearDown(() => viewModel.onDispose());
@@ -119,5 +122,37 @@ void main() {
 
     expect(viewModel.state.status, PagBankStatus.error);
     expect(viewModel.state.message, 'SEM PAPEL');
+  });
+
+  test('imprime a imagem de teste pela impressão livre', () async {
+    await viewModel.printImage(PagBankPrintsMock.image);
+
+    expect(service.calls.single.$1, 'printImage');
+    expect((service.calls.single.$2 as PagBankPrintModel).image, PagBankPrintsMock.image);
+    expect(viewModel.state.status, PagBankStatus.success);
+    expect(viewModel.state.message, 'Imagem impressa.');
+  });
+
+  test('converte a NFC-e em PNG e imprime a imagem convertida', () async {
+    await viewModel.printNfce(NfceMock.pdf);
+
+    expect(converter.pdfs.single, NfceMock.pdf);
+    expect(service.calls.single.$1, 'printImage');
+    expect((service.calls.single.$2 as PagBankPrintModel).image, convertedPng);
+    expect(viewModel.state.status, PagBankStatus.success);
+    expect(viewModel.state.message, 'NFC-e impressa.');
+  });
+
+  test('NFC-e que não converte exibe o erro sem chamar o terminal, mantendo o último pagamento', () async {
+    await viewModel.sendPayment(PagBankPaymentsMock.all.first.request);
+    service.calls.clear();
+    converter.result = left(PdfImageFailure.invalidPdf('PDF corrompido'));
+
+    await viewModel.printNfce('JVBERi0=');
+
+    expect(service.calls, isEmpty);
+    expect(viewModel.state.status, PagBankStatus.error);
+    expect(viewModel.state.message, 'PDF corrompido');
+    expect(viewModel.state.lastPayment?.transactionCode, 'TC1');
   });
 }

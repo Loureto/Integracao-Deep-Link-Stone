@@ -15,8 +15,9 @@ class StoneIntegration extends AcquirerIntegration {
 
   @override
   void binds(GetIt i) {
+    i.registerLazySingleton<IPdfImageConverter>(() => const PdfImageConverter());
     i.registerLazySingleton<IStonePaymentService>(
-      () => StonePaymentService(const MethodChannel('stoneDeeplinkChannel')),
+      () => StonePaymentService(const MethodChannel('stoneDeeplinkChannel'), i.get<IPdfImageConverter>()),
     );
     i.registerFactory<StoneViewModel>(() => StoneViewModel(i.get<IStonePaymentService>()));
   }

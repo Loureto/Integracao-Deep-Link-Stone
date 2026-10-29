@@ -54,6 +54,12 @@ android {
             proguardFile("src/pagbank/proguard-rules.pro")
         }
     }
+
+    // O Robolectric só enxerga os recursos do app, como o scheme de retorno do strings.xml, com esta opção. Os
+    // testes que montam a integração inteira dependem dela.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 flutter {

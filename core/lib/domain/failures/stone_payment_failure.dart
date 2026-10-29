@@ -46,6 +46,25 @@ class StonePaymentFailure {
     return StonePaymentFailure._(code: code, message: message ?? 'Não foi possível iniciar o pagamento.');
   }
 
+  /// Retorno do app de impressão, como `PRINTER_OUT_OF_PAPER`, com o código e a mensagem do stone_sdk.
+  factory StonePaymentFailure.fromPrinter({required String code, String? message}) {
+    return StonePaymentFailure._(code: code, message: message ?? 'Erro genérico da impressora.');
+  }
+
+  factory StonePaymentFailure.printerUnsupportedFormat() {
+    return const StonePaymentFailure._(
+      code: 'PRINTER_UNSUPPORTED_FORMAT',
+      message: 'Algum formato enviado não corresponde ao padrão de texto, imagem ou texto customizado.',
+    );
+  }
+
+  factory StonePaymentFailure.printerInvalidData() {
+    return const StonePaymentFailure._(
+      code: 'PRINTER_INVALID_DATA',
+      message: 'Limite máximo do buffer foi ultrapassado.',
+    );
+  }
+
   factory StonePaymentFailure.fromResponse(StonePaymentResponse response) {
     return StonePaymentFailure._(
       code: response.code ?? '',

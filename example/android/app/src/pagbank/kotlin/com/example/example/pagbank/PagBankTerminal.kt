@@ -10,6 +10,7 @@ import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagEventListener
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPaymentData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPrintResult
+import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagPrinterData
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagTransactionResult
 import br.com.uol.pagseguro.plugpagservice.wrapper.PlugPagVoidData
 
@@ -31,6 +32,9 @@ internal interface PagBankTerminal {
     fun getLastApprovedTransaction(): PlugPagTransactionResult
     fun reprintCustomerReceipt(): PlugPagPrintResult
     fun reprintEstablishmentReceipt(): PlugPagPrintResult
+
+    /** Impressão livre do arquivo em [PlugPagPrinterData.filePath], lido pelo serviço do PagBank. */
+    fun printFromFile(data: PlugPagPrinterData): PlugPagPrintResult
 }
 
 /** Erro da integração enviado ao Dart com [code]. */
@@ -41,6 +45,7 @@ internal class PagBankException(val code: String, message: String) : Exception(m
         const val TERMINAL_UNAVAILABLE = "TERMINAL_UNAVAILABLE"
         const val NOT_AUTHENTICATED = "NOT_AUTHENTICATED"
         const val SERVICE_BUSY = "SERVICE_BUSY"
+        const val STORAGE_UNAVAILABLE = "STORAGE_UNAVAILABLE"
     }
 }
 
@@ -68,6 +73,8 @@ internal class PlugPagTerminal private constructor(private val plugPag: IPlugPag
     override fun reprintCustomerReceipt() = plugPag.reprintCustomerReceipt()
 
     override fun reprintEstablishmentReceipt() = plugPag.reprintStablishmentReceipt()
+
+    override fun printFromFile(data: PlugPagPrinterData) = plugPag.printFromFile(data)
 
     companion object {
         private const val SERVICE_PACKAGE = "br.com.uol.pagseguro.plugpagservice"

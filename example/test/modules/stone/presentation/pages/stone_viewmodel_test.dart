@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:dependencies/dependencies.dart';
 import 'package:example/presentation/mocks/mocks.dart';
@@ -66,5 +68,36 @@ void main() {
 
     expect(viewModel.state.status, StoneStatus.idle);
     expect(viewModel.state.response, isNull);
+  });
+
+  test('fica imprimindo até o app de impressão responder e então exibe o sucesso', () async {
+    service.printing = Completer<void>();
+
+    final printing = viewModel.printNfc(NfceHomologacaoMock.pdf);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(service.nfcs.single, NfceHomologacaoMock.pdf);
+    expect(viewModel.state.status, StoneStatus.loading);
+    expect(viewModel.state.message, 'Imprimindo a NFC-e...');
+
+    service.printing!.complete();
+    await printing;
+
+    expect(viewModel.state.status, StoneStatus.success);
+    expect(viewModel.state.message, 'NFC-e impressa.');
+  });
+
+  test('exibe a falha da impressão', () async {
+    service.printResult = left(
+      StonePaymentFailure.fromPrinter(
+        code: 'PRINTER_OUT_OF_PAPER',
+        message: 'Impressora sem papel ou com a tampa de bobina aberta.',
+      ),
+    );
+
+    await viewModel.printNfc(NfceMock.pdf);
+
+    expect(viewModel.state.status, StoneStatus.error);
+    expect(viewModel.state.message, 'Impressora sem papel ou com a tampa de bobina aberta.');
   });
 }

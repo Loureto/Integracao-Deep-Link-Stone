@@ -38,4 +38,35 @@ void main() {
     expect(find.text('Pagamento aprovado.'), findsOneWidget);
     expect(find.text('brand: MASTERCARD'), findsOneWidget);
   });
+
+  group('impressão de NFC-e', () {
+    /// Tela alta o bastante para a lista inteira, com a impressão abaixo dos pagamentos.
+    Future<void> pumpWholePage(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(const MaterialApp(home: StonePage()));
+    }
+
+    testWidgets('imprime a NFC-e de teste', (tester) async {
+      await pumpWholePage(tester);
+
+      await tester.tap(find.text('Imprimir a NFC-e de teste'));
+      await tester.pumpAndSettle();
+
+      expect(service.nfcs.single, NfceMock.pdf);
+      expect(find.text('NFC-e impressa.'), findsOneWidget);
+    });
+
+    testWidgets('imprime a NFC-e de homologação, como o sistema a envia', (tester) async {
+      await pumpWholePage(tester);
+
+      await tester.tap(find.text('Imprimir a NFC-e de homologação'));
+      await tester.pumpAndSettle();
+
+      expect(service.nfcs.single, NfceHomologacaoMock.pdf);
+      expect(find.text('NFC-e impressa.'), findsOneWidget);
+    });
+  });
 }

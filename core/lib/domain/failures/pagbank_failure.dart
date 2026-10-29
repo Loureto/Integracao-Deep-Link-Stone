@@ -44,6 +44,13 @@ class PagBankFailure {
     );
   }
 
+  factory PagBankFailure.invalidPrint() {
+    return const PagBankFailure._(
+      code: 'INVALID_PRINT',
+      message: 'Informe a imagem a imprimir e um avanço de no mínimo ${PagBankPrintModel.minSteps} linhas.',
+    );
+  }
+
   factory PagBankFailure.noTransaction() {
     return const PagBankFailure._(
       code: 'NO_TRANSACTION',
@@ -83,10 +90,11 @@ class PagBankFailure {
     );
   }
 
+  /// Falha de uma reimpressão ou da impressão livre.
   factory PagBankFailure.fromPrint({String? code, String? message}) {
     return PagBankFailure._(
       code: code ?? '',
-      message: message ?? 'Não foi possível reimprimir o comprovante.',
+      message: message ?? 'Não foi possível imprimir no terminal.',
     );
   }
 }

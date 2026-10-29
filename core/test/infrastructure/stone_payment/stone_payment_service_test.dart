@@ -1,4 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+import 'dart:ui' as ui;
+
 import 'package:core/core.dart';
+import 'package:dependencies/dependencies.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -7,12 +13,14 @@ void main() {
 
   const channel = MethodChannel('stoneDeeplinkChannel');
   final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  late _FakePdfImageConverter converter;
   late StonePaymentService service;
   late List<MethodCall> calls;
 
   setUp(() {
     calls = [];
-    service = StonePaymentService(channel);
+    converter = _FakePdfImageConverter();
+    service = StonePaymentService(channel, converter);
   });
 
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
@@ -136,4 +144,197 @@ void main() {
     expect((await response).data, {'code': '-6', 'reason': '1016', 'message': 'Não autorizada'});
     expect((await response).isApproved, isFalse);
   });
+
+  group('impressão', () {
+    Future<StonePaymentFailure?> printReceipt(Uint8List bitmap) async {
+      return (await service.printReceipt(bitmap: bitmap)).getLeft().toNullable();
+    }
+
+    Future<_Image> sentImage() async {
+      final imageBase64 = (calls.single.arguments as Map)['image_base64'] as String;
+      return _decode(base64Decode(imageBase64));
+    }
+
+    test('printReceipt envia a imagem em preto e branco no print_receipt do stone_sdk', () async {
+      mockAndroid((_) async => 'SUCCESS');
+      // Preto, cinza escuro, cinza claro, branco e um pixel transparente.
+      final bitmap = await _png([0, 100, 160, 255, null]);
+
+      final failure = await printReceipt(bitmap);
+
+      expect(failure, isNull);
+      expect(calls.single.method, 'print_receipt');
+      // Abaixo de 128 vira preto; o resto, inclusive o transparente, vira papel em branco.
+      expect((await sentImage()).tones.take(5), [0, 0, 255, 255, 255]);
+    });
+
+    test('printReceipt acrescenta 1 cm de papel em branco no fim, que o app da Stone não avança', () async {
+      mockAndroid((_) async => 'SUCCESS');
+
+      await printReceipt(await _png([0, 0, 0]));
+
+      // A impressora tem 8 pontos por milímetro: 1 cm são 80 linhas abaixo da última linha da imagem.
+      final sent = await sentImage();
+      expect([sent.width, sent.height], [3, 81]);
+      expect(sent.tones.take(3), [0, 0, 0]);
+      expect(sent.tones.skip(3), everyElement(255));
+    });
+
+    test('printReceipt tenta mais uma vez quando a impressora não inicializa, como o stone_sdk', () async {
+      var attempts = 0;
+      mockAndroid((_) async {
+        if (++attempts == 1) throw PlatformException(code: 'PRINTER_INIT_ERROR');
+        return 'SUCCESS';
+      });
+
+      final failure = await printReceipt(await _png([0]));
+
+      expect(failure, isNull);
+      expect(calls, hasLength(2));
+    });
+
+    test(
+      'printReceipt devolve a falha de inicialização quando ela se repete, sem terceira tentativa',
+      () async {
+        mockAndroid(
+          (_) async => throw PlatformException(
+            code: 'PRINTER_INIT_ERROR',
+            message: 'Erro ao inicializar a impressora.',
+          ),
+        );
+
+        final failure = await printReceipt(await _png([0]));
+
+        expect(failure?.code, 'PRINTER_INIT_ERROR');
+        expect(failure?.message, 'Erro ao inicializar a impressora.');
+        expect(calls, hasLength(2));
+      },
+    );
+
+    test('printReceipt mantém o código e a mensagem do retorno da impressora', () async {
+      mockAndroid(
+        (_) async => throw PlatformException(
+          code: 'PRINTER_OUT_OF_PAPER',
+          message: 'Impressora sem papel ou com a tampa de bobina aberta.',
+        ),
+      );
+
+      final failure = await printReceipt(await _png([0]));
+
+      expect(failure?.code, 'PRINTER_OUT_OF_PAPER');
+      expect(failure?.message, 'Impressora sem papel ou com a tampa de bobina aberta.');
+      expect(calls, hasLength(1));
+    });
+
+    test('printReceipt usa a mensagem genérica da impressora quando o Android não envia mensagem', () async {
+      mockAndroid((_) async => throw PlatformException(code: 'PRINTER_PRINT_ERROR'));
+
+      expect((await printReceipt(await _png([0])))?.message, 'Erro genérico da impressora.');
+    });
+
+    test('printReceipt não envia a imagem que passa do tamanho aceito no deeplink', () async {
+      mockAndroid((_) async => 'SUCCESS');
+      // Ruído não comprime: mesmo em preto e branco, o PNG de 384 x 4000 tem uns 190 KB.
+      final random = Random(7);
+      final noise = await _png([
+        for (var i = 0; i < 384 * 4000; i++) random.nextBool() ? 0 : 255,
+      ], width: 384);
+
+      final failure = await printReceipt(noise);
+
+      expect(failure?.code, 'PRINTER_INVALID_DATA');
+      expect(failure?.message, 'Limite máximo do buffer foi ultrapassado.');
+      expect(calls, isEmpty);
+    });
+
+    test('printReceipt não envia o que não é imagem', () async {
+      mockAndroid((_) async => 'SUCCESS');
+
+      final failure = await printReceipt(Uint8List.fromList([1, 2, 3]));
+
+      expect(failure?.code, 'PRINTER_UNSUPPORTED_FORMAT');
+      expect(
+        failure?.message,
+        'Algum formato enviado não corresponde ao padrão de texto, imagem ou texto customizado.',
+      );
+      expect(calls, isEmpty);
+    });
+
+    test('printReceipt retorna NOT_SUPPORTED quando o canal não existe na plataforma', () async {
+      mockAndroid(null);
+
+      expect((await printReceipt(await _png([0])))?.code, 'NOT_SUPPORTED');
+    });
+
+    test(
+      'printNfc converte a primeira página da NFC-e e imprime a imagem, como o StoneIntegration',
+      () async {
+        mockAndroid((_) async => 'SUCCESS');
+        converter.result = right(await _png([0, 255]));
+
+        final result = await service.printNfc('JVBERi0=');
+
+        expect(result.isRight(), isTrue);
+        expect(converter.pdfs.single, 'JVBERi0=');
+        expect(calls.single.method, 'print_receipt');
+        expect((await sentImage()).tones.take(2), [0, 255]);
+      },
+    );
+
+    test('printNfc devolve a falha do conversor sem chamar o Android', () async {
+      mockAndroid((_) async => 'SUCCESS');
+      converter.result = left(PdfImageFailure.invalidPdf('PDF corrompido'));
+
+      final failure = (await service.printNfc('JVBERi0=')).getLeft().toNullable();
+
+      expect(failure?.code, 'INVALID_PDF');
+      expect(failure?.message, 'PDF corrompido');
+      expect(calls, isEmpty);
+    });
+  });
+}
+
+/// PNG com [tones] de cinza em linhas de [width] pontos; `null` é um pixel transparente.
+Future<Uint8List> _png(List<int?> tones, {int? width}) async {
+  final columns = width ?? tones.length;
+  final pixels = Uint8List(tones.length * 4);
+  for (final (i, tone) in tones.indexed) {
+    pixels.setAll(i * 4, tone == null ? [0, 0, 0, 0] : [tone, tone, tone, 255]);
+  }
+  final completer = Completer<ui.Image>();
+  ui.decodeImageFromPixels(
+    pixels,
+    columns,
+    tones.length ~/ columns,
+    ui.PixelFormat.rgba8888,
+    completer.complete,
+  );
+  final image = await completer.future;
+  final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+  return bytes!.buffer.asUint8List();
+}
+
+/// Largura e altura do PNG e o tom de cinza de cada pixel, linha a linha.
+typedef _Image = ({int width, int height, List<int> tones});
+
+Future<_Image> _decode(Uint8List png) async {
+  final codec = await ui.instantiateImageCodec(png);
+  final image = (await codec.getNextFrame()).image;
+  final pixels = (await image.toByteData())!.buffer.asUint8List();
+  return (
+    width: image.width,
+    height: image.height,
+    tones: [for (var i = 0; i < pixels.length; i += 4) pixels[i]],
+  );
+}
+
+class _FakePdfImageConverter implements IPdfImageConverter {
+  final pdfs = <String>[];
+  late Either<PdfImageFailure, Uint8List> result;
+
+  @override
+  Future<Either<PdfImageFailure, Uint8List>> firstPageToPng(String pdfBase64) async {
+    pdfs.add(pdfBase64);
+    return result;
+  }
 }

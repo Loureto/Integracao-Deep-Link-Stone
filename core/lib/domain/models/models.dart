@@ -10,6 +10,7 @@ export 'cielo_response_entity.dart';
 export 'cielo_sub_acquirer_model.dart';
 export 'pagbank_event_entity.dart';
 export 'pagbank_payment_model.dart';
+export 'pagbank_print_model.dart';
 export 'pagbank_transaction_entity.dart';
 export 'pagbank_void_model.dart';
 export 'stone_payment_model.dart';

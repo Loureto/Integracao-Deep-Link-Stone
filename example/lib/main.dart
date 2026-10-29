@@ -13,6 +13,7 @@ import 'integrations/integrations.dart';
 const _isStone = appFlavor == 'stone';
 const _isCielo = appFlavor == 'cielo';
 const _isPagBank = appFlavor == 'pagbank';
+const _isVero = appFlavor == 'vero';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,7 @@ AcquirerIntegration _flavorIntegration(Environment environment) {
   if (_isStone) return StoneIntegration();
   if (_isCielo) return CieloIntegration();
   if (_isPagBank) return PagBankIntegration();
+  if (_isVero) return VeroIntegration();
 
   return HelpIntegration();
 }

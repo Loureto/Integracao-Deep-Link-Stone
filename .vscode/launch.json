@@ -39,6 +39,19 @@
         "--dart-define-from-file",
         "../assets/env/pagbank_env.json"
       ]
+    },
+    {
+      "name": "Vero Integration",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "example",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--flavor",
+        "vero",
+        "--dart-define-from-file",
+        "../assets/env/vero_env.json"
+      ]
     }
   ]
 }

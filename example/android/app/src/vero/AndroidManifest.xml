@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <!-- Sunmi: obrigatório no Android 11+ (API 30+) para a printerlibrary, que o posmpapi usa no P2, enxergar
+             e ligar ao serviço de impressão do terminal. O manifest da printerlibrary não declara a consulta. -->
+        <package android:name="woyou.aidlservice.jiuiv5" />
+    </queries>
+</manifest>

@@ -21,4 +21,11 @@ class MainActivity : FlutterActivity() {
 
         integration.onNewIntent(intent)
     }
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        integration.onActivityResult(requestCode, resultCode, data)
+    }
 }

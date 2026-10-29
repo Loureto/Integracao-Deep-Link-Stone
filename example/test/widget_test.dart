@@ -39,6 +39,13 @@ void main() {
     expect(find.byType(HomePage), findsNothing);
   });
 
+  testWidgets('flavor vero: abre direto na tela da Vero', (tester) async {
+    await pumpApp(tester, 'vero', const VeroIntegration());
+
+    expect(find.byType(VeroPage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
   testWidgets('sem --flavor, a home de ajuda mostra o flavor e o env do build e como rodar', (tester) async {
     await pumpApp(tester, 'cielo', const HelpIntegration());
 

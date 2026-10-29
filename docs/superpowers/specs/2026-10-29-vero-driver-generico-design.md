@@ -129,7 +129,10 @@ Todos os campos são `String`. Um campo ausente vira `''`, e um valor que não �
 | `establishmentCnpj` | `CNPJ_ESTABELECIMENTO` | `installments` | `PARCELAS` |
 | `nsu` | `NSU` | `acquirerName` | `NOME_ADQUIRENTE` |
 
-`merchantReceipt` e `customerReceipt` chegam como caminhos de arquivo no cache: o nativo copia as URIs, como o plugin. Na fachada, o `AcquirerTransactionResult.fromVeroTransaction` já lê esses arquivos. Por terem os mesmos nomes, ele e o `AcquirerError.fromVeroError` funcionam sem mudança.
+`merchantReceipt` e `customerReceipt` chegam como caminhos de arquivo no cache: o nativo copia as URIs, como o plugin. Na fachada, o `AcquirerTransactionResult.fromVeroTransaction` já lê esses arquivos. Por terem os mesmos nomes, ele e o `AcquirerError.fromVeroError` funcionam sem mudança, com uma exceção:
+- um comprovante ausente ou que não abriu chega como `''` (divergência 3);
+- o `File('').readAsBytesSync()` do `fromVeroTransaction` lança `PathNotFoundException`, e o PDV mostra o erro sem gravar o pagamento já cobrado;
+- por isso, no ciclo de integração, a fachada só lê o arquivo quando o caminho não é vazio e o arquivo existe.
 
 ### Erros da Vero (`VeroError {code, message}`)
 
@@ -189,6 +192,15 @@ Todos os campos são `String`. Um campo ausente vira `''`, e um valor que não �
 4. **Canal inexistente vira `<método>.not.implemented`.** O plugin pretendia isso, mas captura `UnimplementedError`, e o Flutter lança `MissingPluginException`.
 5. **NFC-e pelo driver.** Usa o conversor atual mais 1 cm no fim. O `centralizer` imprimia a página inteira do PDF, com o branco do próprio PDF.
 6. **Exceção inesperada ao abrir o app da Vero.** Responde `ERRO_DESCONHECIDO`. No plugin, essa exceção só ia para o log e a chamada ficava sem resposta.
+7. **Falha do driver ao criar a impressora vira erro de impressão.** Uma biblioteca do fabricante fora do APK (`NoClassDefFoundError`) ou um modelo que o `posmpapi` não conhece respondem `ERRO_DESCONHECIDO` / "Erro na impressão". No `centralizer`, o `Error` derrubava o app, e o modelo desconhecido voltava com o código `error` e a stack trace como mensagem.
+8. **Extras que o codec do Flutter não carrega vão como texto.** `Char`, arrays e `Parcelable`, por exemplo, viram `toString()`. No plugin, eles derrubavam o app no retorno aprovado.
+9. **`AUTORIZACAO` aprova em qualquer tipo.** O plugin a lia só como `String`, e uma numérica virava "Operação cancelada pelo usuário!" depois da cobrança.
+10. **Comprovante automático com espera de até 60 s.** Se o driver não responder, a transação aprovada volta assim mesmo. No `centralizer`, a espera não tinha limite, e o `posmpapi` pode nunca chamar o listener.
+11. **Comprovante do cliente vazio não vai à impressora.** Sem esse cuidado, sairia uma faixa em branco.
+12. **Comprovante copiado para a pasta do extra no cache, só com o nome do arquivo.** O plugin usava o `lastPathSegment` decodificado direto no cache. Um `%2F..` saía do cache, e dois comprovantes com o mesmo nome se sobrescreviam.
+13. **O driver responde ao Dart uma vez só.** Um segundo retorno do listener é ignorado; na Sunmi, trabalhos sobrepostos podem gerá-lo. No `centralizer`, ele derrubava o app com "Reply already submitted".
+
+A `com.sunmi:printerlibrary:1.0.23`, que o `posmpapi` usa no P2 sem trazê-la no AAR, é declarada direto no flavor. No PDV Varejo, ela vinha do plugin `vero_flutter`, na mesma versão. O flavor também declara a consulta ao serviço de impressão da Sunmi (`woyou.aidlservice.jiuiv5`), exigida no Android 11+. Nem o PDV nem o `centralizer` a declaram.
 
 ## Mantido igual ao `centralizer`
 

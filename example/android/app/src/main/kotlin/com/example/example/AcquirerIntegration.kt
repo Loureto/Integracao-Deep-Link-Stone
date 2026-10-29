@@ -6,7 +6,7 @@ import android.content.Intent
 import io.flutter.plugin.common.BinaryMessenger
 
 /**
- * Integração nativa da adquirente do flavor (stone, cielo ou pagbank) com a [MainActivity]. Cada flavor
+ * Integração nativa da adquirente do flavor (stone, cielo, pagbank ou vero) com a [MainActivity]. Cada flavor
  * entrega a sua em `createAcquirerIntegration`, no próprio source set, então o APK leva só o código da
  * sua adquirente.
  */
@@ -17,4 +17,10 @@ internal interface AcquirerIntegration {
 
     /** Intents que chegam à [MainActivity] já aberta, como os retornos de deep link. */
     fun onNewIntent(intent: Intent) = Unit
+
+    /**
+     * Resultados de `startActivityForResult` que chegam à [MainActivity], como o retorno do app da Vero.
+     * Devolve se a integração tratou o [requestCode].
+     */
+    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean = false
 }

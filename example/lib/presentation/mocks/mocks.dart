@@ -4,5 +4,6 @@ export 'nfce_homologacao_mock.dart';
 export 'nfce_mock.dart';
 export 'pagbank_payments_mock.dart';
 export 'pagbank_prints_mock.dart';
+export 'rede_payments_mock.dart';
 export 'stone_payments_mock.dart';
 export 'vero_payments_mock.dart';

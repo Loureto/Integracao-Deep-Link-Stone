@@ -202,6 +202,8 @@ Todos os campos são `String`. Um campo ausente vira `''`, e um valor que não �
 
 A `com.sunmi:printerlibrary:1.0.23`, que o `posmpapi` usa no P2 sem trazê-la no AAR, é declarada direto no flavor. No PDV Varejo, ela vinha do plugin `vero_flutter`, na mesma versão. O flavor também declara a consulta ao serviço de impressão da Sunmi (`woyou.aidlservice.jiuiv5`), exigida no Android 11+. Nem o PDV nem o `centralizer` a declaram.
 
+O release do flavor leva as regras `src/vero/proguard-rules.pro`. O `posmpapi` cita SDKs de impressão de outros fabricantes (Gertec GEDI, Tectoy, Clover, Newland, Perto, Wizarpos, Xcheng) que o APK não leva, e sem os `-dontwarn` o R8 parava o release. O `proguard-rules.pro` do PDV Varejo tem as mesmas regras.
+
 ## Mantido igual ao `centralizer`
 
 - Comprovante automático depois de pagamento e estorno, com o resultado da impressão ignorado.

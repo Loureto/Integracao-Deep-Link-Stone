@@ -3,10 +3,6 @@ package com.example.example.printer
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -15,7 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Impressão pelo driver genérico, com os nomes e o comportamento do `ServicePrinter` do centralizer: abre a
- * impressora ao ser criado, desenha o texto num bitmap de 80 mm e responde ao Dart quando a impressão termina.
+ * impressora ao ser criado, desenha o texto num bitmap de 80 mm ([textToBitmap]) e responde ao Dart quando a
+ * impressão termina.
  */
 internal class ServicePrinter(
     private val printer: PosPrinter,
@@ -40,7 +37,7 @@ internal class ServicePrinter(
         printBitmap(bitmap)
     }
 
-    fun testPrint() = printBitmap(textToBitmap(TEST_TEXT))
+    fun testPrint() = printBitmap(textToBitmap(TEST_PRINT_TEXT))
 
     fun printTxtReceipt(text: String) = printBitmap(textToBitmap(text))
 
@@ -84,37 +81,5 @@ internal class ServicePrinter(
         internal const val PRINTING_ERROR = "Erro na impressão"
         private const val OUT_OF_PAPER = "ERRO_SEM_PAPEL"
         private const val OUT_OF_PAPER_MESSAGE = "Impressora sem papel, verifique!"
-        private const val TEST_TEXT = "Impressao teste"
-
-        /** Largura da bobina de 80 mm, como no centralizer; o posmpapi adapta à impressora do terminal. */
-        private const val PRINTER_80MM_WIDTH = 576
-
-        fun textToBitmap(text: String): Bitmap {
-            val paint = Paint().apply {
-                color = Color.BLACK
-                textSize = 20f
-                typeface = Typeface.MONOSPACE
-                isAntiAlias = true
-            }
-
-            // Mesmas linhas do String.split do Java no centralizer: sem quebra, uma linha; com quebras, sem as
-            // linhas vazias do fim.
-            val lines = if ('\n' !in text) listOf(text) else text.split('\n').dropLastWhile { it.isEmpty() }
-
-            val lineHeight = (paint.descent() - paint.ascent()).toInt()
-            val height = lineHeight * lines.size + 20
-
-            val bitmap = Bitmap.createBitmap(PRINTER_80MM_WIDTH, height, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            canvas.drawColor(Color.WHITE)
-
-            var y = (-paint.ascent()).toInt()
-            for (line in lines) {
-                canvas.drawText(line, 0f, y.toFloat(), paint)
-                y += lineHeight
-            }
-
-            return bitmap
-        }
     }
 }

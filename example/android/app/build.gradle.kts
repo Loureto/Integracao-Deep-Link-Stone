@@ -55,6 +55,13 @@ android {
         }
         create("vero") {
             dimension = "acquirer"
+            proguardFile("src/vero/proguard-rules.pro")
+        }
+        create("rede") {
+            dimension = "acquirer"
+            // O SDK da Rede (L400) exige a API 28, como o flavor redeSdk do centralizer.
+            minSdk = 28
+            proguardFile("src/rede/proguard-rules.pro")
         }
     }
 
@@ -88,6 +95,16 @@ dependencies {
     // O posmpapi chama a biblioteca de impressão da Sunmi no P2 sem trazê-la no AAR. No PDV Varejo ela vinha do
     // plugin vero_flutter, nesta mesma versão; sem ela, a impressão lança NoClassDefFoundError no terminal.
     "veroImplementation"("com.sunmi:printerlibrary:1.0.23")
+
+    // Rede: SDK SmartRede do L400, copiado do plugin flutter_rede_sdk do centralizer.
+    "redeImplementation"(files("libs/smartrede-sdk-l400-4.1.1.release.aar"))
+    // O SDK da Rede usa estas bibliotecas sem trazê-las no AAR: o Gson lê o pagamento que volta do app da
+    // Rede, e a impressora do L400 roda em runBlocking (coroutines). No PDV Varejo elas vinham de outros
+    // plugins (o Gson, do flutter_rede_sdk, nesta versão). Sem elas, o pagamento e a impressão lançam
+    // NoClassDefFoundError, como aconteceu com a biblioteca da Sunmi na Vero.
+    "redeImplementation"("com.google.code.gson:gson:2.11.0")
+    "redeImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    "redeImplementation"("androidx.appcompat:appcompat:1.7.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.16.1")

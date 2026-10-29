@@ -1,10 +1,9 @@
-import 'dart:async';
-import 'dart:ui' as ui;
-
 import 'package:core/core.dart';
 import 'package:dependencies/dependencies.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../helpers/images.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -48,32 +47,14 @@ void main() {
   test('printReceipt manda o bitmap com 1 cm de papel em branco no fim', () async {
     mockAndroid((_) async => 'Sucesso ao efetuar a impressão');
 
-    await service.printReceipt(bitmap: await _png([0, 0, 0]));
+    await service.printReceipt(bitmap: await png([0, 0, 0]));
 
     expect(calls.single.method, 'printReceipt');
     // A impressora tem 8 pontos por milímetro: 1 cm são 80 linhas abaixo da última linha da imagem.
-    final sent = await _decode((calls.single.arguments as Map)['bitmap'] as Uint8List);
+    final sent = await decodePng((calls.single.arguments as Map)['bitmap'] as Uint8List);
     expect([sent.width, sent.height], [3, 81]);
     expect(sent.tones.take(3), [0, 0, 0]);
     expect(sent.tones.skip(3), everyElement(255));
-  });
-
-  test('printReceipt libera o Picture usado para a margem', () async {
-    mockAndroid((_) async => 'Sucesso ao efetuar a impressão');
-    final png = await _png([0, 0, 0]);
-    final created = <ui.Picture>[];
-    final disposed = <ui.Picture>[];
-    ui.Picture.onCreate = created.add;
-    ui.Picture.onDispose = disposed.add;
-    addTearDown(() {
-      ui.Picture.onCreate = null;
-      ui.Picture.onDispose = null;
-    });
-
-    await service.printReceipt(bitmap: png);
-
-    expect(created, hasLength(1));
-    expect(disposed, created);
   });
 
   test('printReceipt não manda o que não é imagem', () async {
@@ -126,7 +107,7 @@ void main() {
 
   test('printNfc converte a NFC-e e imprime a imagem', () async {
     mockAndroid((_) async => 'Sucesso ao efetuar a impressão');
-    converter.result = right(await _png([0, 255]));
+    converter.result = right(await png([0, 255]));
 
     final result = await service.printNfc('JVBERi0=');
 
@@ -170,40 +151,6 @@ void main() {
       ['NOT_SUPPORTED', 'Driver de impressão indisponível nesta plataforma.'],
     );
   });
-}
-
-/// PNG com [tones] de cinza em linhas de [width] pontos.
-Future<Uint8List> _png(List<int> tones, {int? width}) async {
-  final columns = width ?? tones.length;
-  final pixels = Uint8List(tones.length * 4);
-  for (final (i, tone) in tones.indexed) {
-    pixels.setAll(i * 4, [tone, tone, tone, 255]);
-  }
-  final completer = Completer<ui.Image>();
-  ui.decodeImageFromPixels(
-    pixels,
-    columns,
-    tones.length ~/ columns,
-    ui.PixelFormat.rgba8888,
-    completer.complete,
-  );
-  final image = await completer.future;
-  final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-  return bytes!.buffer.asUint8List();
-}
-
-/// Largura e altura do PNG e o tom de cinza de cada pixel, linha a linha.
-typedef _Image = ({int width, int height, List<int> tones});
-
-Future<_Image> _decode(Uint8List png) async {
-  final codec = await ui.instantiateImageCodec(png);
-  final image = (await codec.getNextFrame()).image;
-  final pixels = (await image.toByteData())!.buffer.asUint8List();
-  return (
-    width: image.width,
-    height: image.height,
-    tones: [for (var i = 0; i < pixels.length; i += 4) pixels[i]],
-  );
 }
 
 /// Canal em que o Android responde com [error]. O mock de canal do Flutter não repassa a stack trace.

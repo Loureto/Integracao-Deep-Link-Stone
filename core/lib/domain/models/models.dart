@@ -13,6 +13,7 @@ export 'pagbank_payment_model.dart';
 export 'pagbank_print_model.dart';
 export 'pagbank_transaction_entity.dart';
 export 'pagbank_void_model.dart';
+export 'rede_transaction_result.dart';
 export 'stone_payment_model.dart';
 export 'stone_payment_response_entity.dart';
 export 'vero_transaction_result.dart';

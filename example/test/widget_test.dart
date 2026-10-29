@@ -46,6 +46,13 @@ void main() {
     expect(find.byType(HomePage), findsNothing);
   });
 
+  testWidgets('flavor rede: abre direto na tela da Rede', (tester) async {
+    await pumpApp(tester, 'rede', const RedeIntegration());
+
+    expect(find.byType(RedePage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
   testWidgets('sem --flavor, a home de ajuda mostra o flavor e o env do build e como rodar', (tester) async {
     await pumpApp(tester, 'cielo', const HelpIntegration());
 

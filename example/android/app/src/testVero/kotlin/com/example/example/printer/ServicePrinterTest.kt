@@ -32,7 +32,7 @@ class ServicePrinterTest {
 
         val bitmap = printer.bitmap!!
         assertEquals(576, bitmap.width)
-        assertTrue(bitmap.height > ServicePrinter.textToBitmap("LINHA 1").height)
+        assertTrue(bitmap.height > textToBitmap("LINHA 1").height)
         assertEquals(emptyList<String>(), result.replies)
 
         printer.listener!!.onFinish()
@@ -124,6 +124,6 @@ class ServicePrinterTest {
     fun `testPrint imprime Impressao teste`() {
         ServicePrinter(printer, result).testPrint()
 
-        assertTrue(printer.bitmap!!.sameAs(ServicePrinter.textToBitmap("Impressao teste")))
+        assertTrue(printer.bitmap!!.sameAs(textToBitmap(TEST_PRINT_TEXT)))
     }
 }

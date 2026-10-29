@@ -52,6 +52,19 @@
         "--dart-define-from-file",
         "../assets/env/vero_env.json"
       ]
+    },
+    {
+      "name": "Rede Integration",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "example",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--flavor",
+        "rede",
+        "--dart-define-from-file",
+        "../assets/env/rede_env.json"
+      ]
     }
   ]
 }

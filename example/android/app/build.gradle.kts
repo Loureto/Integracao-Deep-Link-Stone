@@ -55,7 +55,7 @@ android {
         }
         create("vero") {
             dimension = "acquirer"
-            proguardFile("src/vero/proguard-rules.pro")
+            proguardFile("src/genericPrinter/proguard-rules.pro")
         }
         create("rede") {
             dimension = "acquirer"
@@ -63,12 +63,20 @@ android {
             minSdk = 28
             proguardFile("src/rede/proguard-rules.pro")
         }
+        create("sipag") {
+            dimension = "acquirer"
+            proguardFile("src/genericPrinter/proguard-rules.pro")
+            proguardFile("src/sipag/proguard-rules.pro")
+        }
     }
 
     // Driver genérico de impressão (posmpapi), o mesmo do centralizer. Entra só nos flavors das adquirentes
     // que o usam: o AAR cita outras adquirentes, e o PagBank não homologa app com essas referências.
     sourceSets {
         getByName("vero") {
+            java.srcDir("src/genericPrinter/kotlin")
+        }
+        getByName("sipag") {
             java.srcDir("src/genericPrinter/kotlin")
         }
     }
@@ -105,6 +113,19 @@ dependencies {
     "redeImplementation"("com.google.code.gson:gson:2.11.0")
     "redeImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     "redeImplementation"("androidx.appcompat:appcompat:1.7.0")
+
+    // Sipag: apix990 (DX8000 e X990, pelo app Sicoob) e pos7api (P2, pelo app da Ger7), copiados do plugin
+    // flutter_sipag_sdk do centralizer. Do pos7api vai só o release: o AAR debug tem o mesmo código, e o plugin
+    // os trocava pelo buildType à toa.
+    "sipagImplementation"(files("libs/apix990-release.aar"))
+    "sipagImplementation"(files("libs/pos7api-release-v1090004.aar"))
+    // A Sipag imprime pelo driver genérico, como a Vero, e no P2 ele usa a biblioteca da Sunmi sem trazê-la.
+    "sipagImplementation"(files("libs/posmpapi_1.01.10-partnersRelease.aar"))
+    "sipagImplementation"("com.sunmi:printerlibrary:1.0.23")
+    // O apix990 lê o resultado do app Sicoob em coroutines (Dispatchers.IO, launch, delay) sem trazê-las. No PDV
+    // Varejo elas vinham do próprio plugin; aqui o app já as resolve por outro caminho, mas a dependência fica
+    // declarada para não sumir com uma atualização, a mesma armadilha da Rede.
+    "sipagImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.16.1")

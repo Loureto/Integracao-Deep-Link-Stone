@@ -53,6 +53,13 @@ void main() {
     expect(find.byType(HomePage), findsNothing);
   });
 
+  testWidgets('flavor sipag: abre direto na tela da Sipag', (tester) async {
+    await pumpApp(tester, 'sipag', const SipagIntegration());
+
+    expect(find.byType(SipagPage), findsOneWidget);
+    expect(find.byType(HomePage), findsNothing);
+  });
+
   testWidgets('sem --flavor, a home de ajuda mostra o flavor e o env do build e como rodar', (tester) async {
     await pumpApp(tester, 'cielo', const HelpIntegration());
 

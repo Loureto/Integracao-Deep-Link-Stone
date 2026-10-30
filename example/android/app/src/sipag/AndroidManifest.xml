@@ -1,0 +1,25 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- O apix990 declara android:label="@string/app_name" no <application>, e a mesclagem falha no conflito
+         com o rótulo do app. O tools:replace mantém o rótulo do manifest principal, como no exemplo do
+         plugin. -->
+    <application
+        android:label="example"
+        tools:replace="android:label" />
+
+    <queries>
+        <!-- Sunmi: obrigatório no Android 11+ (API 30+) para a printerlibrary, que o posmpapi usa no P2,
+             enxergar e ligar ao serviço de impressão do terminal. O manifest da printerlibrary não declara a
+             consulta. -->
+        <package android:name="woyou.aidlservice.jiuiv5" />
+        <!-- Serviços de impressão que o posmpapi liga na X990 (Verifone) e no DX8000 (Ingenico). No
+             Android 11+, sem a consulta, o bind falha calado; o manifest do posmpapi não as declara. -->
+        <package android:name="com.vfi.smartpos.deviceservice" />
+        <package android:name="com.usdk.apiservice" />
+        <!-- App Sicoob, que paga no DX8000 e na X990. O TransactionInfo.getSipag do apix990 o procura por
+             esta ação, e no Android 11+ ela só aparece com a consulta. -->
+        <intent>
+            <action android:name="br.com.sicoob.skin.acquirerposskin.ACAO_ESPECIFICA" />
+        </intent>
+    </queries>
+</manifest>

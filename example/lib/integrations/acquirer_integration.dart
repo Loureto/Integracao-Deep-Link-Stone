@@ -1,7 +1,7 @@
 import 'package:dependencies/dependencies.dart';
 
 /// Integração de uma adquirente com o app: a tela e as dependências dela. Cada flavor do Android
-/// (stone, cielo, pagbank, vero, rede) monta o app só com a sua, escolhida no `main.dart`.
+/// (stone, cielo, pagbank, vero, rede, sipag) monta o app só com a sua, escolhida no `main.dart`.
 abstract class AcquirerIntegration {
   const AcquirerIntegration();
 

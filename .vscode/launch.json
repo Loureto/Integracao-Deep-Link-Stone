@@ -65,6 +65,19 @@
         "--dart-define-from-file",
         "../assets/env/rede_env.json"
       ]
+    },
+    {
+      "name": "Sipag Integration",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "example",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--flavor",
+        "sipag",
+        "--dart-define-from-file",
+        "../assets/env/sipag_env.json"
+      ]
     }
   ]
 }

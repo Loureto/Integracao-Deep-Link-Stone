@@ -15,6 +15,7 @@ const _isCielo = appFlavor == 'cielo';
 const _isPagBank = appFlavor == 'pagbank';
 const _isVero = appFlavor == 'vero';
 const _isRede = appFlavor == 'rede';
+const _isSipag = appFlavor == 'sipag';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,7 @@ AcquirerIntegration _flavorIntegration(Environment environment) {
   if (_isPagBank) return PagBankIntegration();
   if (_isVero) return VeroIntegration();
   if (_isRede) return RedeIntegration();
+  if (_isSipag) return SipagIntegration();
 
   return HelpIntegration();
 }
